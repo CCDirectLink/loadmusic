@@ -1,4 +1,5 @@
 var modDir = "assets/mods/loadmusic/";
+var fs = require('fs');
 Object.entries = Object.entries || function(obj) {
     var pairs = []
     for (var i in obj) {
