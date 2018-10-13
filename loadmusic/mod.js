@@ -1,5 +1,5 @@
 var onModsLoaded = function() {
-	const loadMusicPath = simplify.getMod("loadmusic").getBaseDirectory();
+	const loadMusicPath = simplify.getMod("Custom Music Loader").baseDirectory;
 	const fs = require('fs');
 	const {join } = require('path');
 	
@@ -14,6 +14,11 @@ var onModsLoaded = function() {
 		throw Error(`Mod loadmusic could not load.\nFile "${musicDataPath}" was not found.`);
 	}
 	
+	function replaceObjectValue(leftObject, rightObject) {
+		for(var key of Object.keys(rightObject)) {
+			leftObject[key] = rightObject[key];
+		}
+	}
 	function renameObjectKey(obj, oldKey, newKey) {
 		if(obj[oldKey]) {
 			obj[newKey] = obj[oldKey];
@@ -30,14 +35,14 @@ var onModsLoaded = function() {
 	}
 	
 	function loadCustomMusic() {
-		var customMusic = musicData.bgm || {};
-		var musicKeys = getObjectEntries(cc.ig.bgm.varNames);
-		musicKeys.forEach(function(element) {
-			for (var i in customMusic) {
-				renameObjectKey(customMusic[i], element[0], element[1]);
+		let customMusic = musicData.bgm || {};
+		let musicKeys = getObjectEntries(cc.ig.bgm.varNames);
+		for (let i in customMusic) {
+			for(let [oldKey, newKey] of musicKeys) {
+				renameObjectKey(customMusic[i], oldKey, newKey);
 			}
-		})
-		ig.merge(cc.ig.BGM_TRACK_LIST, customMusic);
+		}
+		replaceObjectValue(cc.ig.BGM_TRACK_LIST, customMusic);
 	};
 
 	function loadCustomTrackConfig() {
@@ -48,11 +53,12 @@ var onModsLoaded = function() {
 				renameObjectKey(mapBGMData[themeType],"name", cc.ig.varNames.BGMpath)
 			}
 		}
-		ig.merge(cc.ig.bgm.mapConfig, mapTrackConfigs);
+		replaceObjectValue(cc.ig.bgm.mapConfig, mapTrackConfigs);
 	};
 	
 	loadCustomMusic();
 	loadCustomTrackConfig();
+	document.body.removeEventListener('modsLoaded', this);
 
 };
 document.body.addEventListener('modsLoaded', onModsLoaded);
