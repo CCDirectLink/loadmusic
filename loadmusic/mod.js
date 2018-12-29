@@ -32,7 +32,19 @@ var onModsLoaded = function() {
 		}
 		return pairs;
 	}
-	
+	function completeRelativePath(modRelativePath, {bgm}) {
+		if(bgm) {
+			for(let key of Object.keys(bgm)) {
+				const singleBGM = bgm[key];
+				if(singleBGM.path) {
+					singleBGM.path = join(modRelativePath , singleBGM.path);
+				}
+				if(singleBGM.intro) {
+					singleBGM.intro = join(modRelativePath , singleBGM.intro);
+				}
+			}
+		}
+	}
 	function loadCustomMusic(musicData) {
 		if(!musicData)
 			return;
@@ -72,6 +84,7 @@ var onModsLoaded = function() {
 			console.log(modFolderName, "has music!");
 			let rawMusicData = fs.readFileSync(modMusicDataFilePath);
 			let musicData = JSON.parse(rawMusicData) || {};
+			completeRelativePath(join('mods', modFolderName), musicData);
 			loadCustomMusic(musicData);
 			loadCustomTrackConfig(musicData);
 		}
