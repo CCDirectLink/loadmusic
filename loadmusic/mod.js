@@ -6,13 +6,12 @@ var onModsLoaded = function() {
 	const musicDataFileName = "custom_music.db";
 	const musicDataPath = join(loadMusicPath , musicDataFileName);
 	
-	try {
-		var rawMusicData = fs.readFileSync(musicDataPath);
-		var musicData = JSON.parse(rawMusicData);
+	/*try {
+		
 		console.log(musicData);
 	} catch(e) {
 		throw Error(`Mod loadmusic could not load.\nFile "${musicDataPath}" was not found.`);
-	}
+	} */
 	
 	function replaceObjectValue(leftObject, rightObject) {
 		for(var key of Object.keys(rightObject)) {
@@ -31,10 +30,12 @@ var onModsLoaded = function() {
 		for (var i in obj) {
 			pairs.push([i, obj[i]]);
 		}
-		return pairs
+		return pairs;
 	}
 	
-	function loadCustomMusic() {
+	function loadCustomMusic(musicData) {
+		if(!musicData)
+			return;
 		let customMusic = musicData.bgm || {};
 		let musicKeys = getObjectEntries(cc.ig.bgm.varNames);
 		for (let i in customMusic) {
@@ -45,8 +46,10 @@ var onModsLoaded = function() {
 		replaceObjectValue(cc.ig.BGM_TRACK_LIST, customMusic);
 	};
 
-	function loadCustomTrackConfig() {
-		var mapTrackConfigs = musicData.mapTrackConfigs;
+	function loadCustomTrackConfig(musicData) {
+		if(!musicData)
+			return;
+		var mapTrackConfigs = musicData.mapTrackConfigs || {};
 		for (var mapName in mapTrackConfigs) {
 			var mapBGMData = mapTrackConfigs[mapName];
 			for (var themeType in mapBGMData) {
@@ -56,9 +59,25 @@ var onModsLoaded = function() {
 		replaceObjectValue(cc.ig.bgm.mapConfig, mapTrackConfigs);
 	};
 	
-	loadCustomMusic();
-	loadCustomTrackConfig();
-	document.body.removeEventListener('modsLoaded', this);
+	const modDirectory = join(loadMusicPath, '..');
+	const modsFolderName = fs.readdirSync(modDirectory);
+	for(let modFolderName of modsFolderName) {
+		console.log("----------------------");
+		console.log(`%c${modFolderName}`, "color:red");
+		let modFolder = join(modDirectory, modFolderName);
+		
+		let modMusicDataFilePath = join(modFolder, musicDataFileName);
+		console.log(modFolder, modMusicDataFilePath);
+		if(fs.existsSync(modMusicDataFilePath)) {
+			console.log(modFolderName, "has music!");
+			let rawMusicData = fs.readFileSync(modMusicDataFilePath);
+			let musicData = JSON.parse(rawMusicData) || {};
+			loadCustomMusic(musicData);
+			loadCustomTrackConfig(musicData);
+		}
+	}
+	/**/
+	document.body.removeEventListener('modsLoaded', onModsLoaded);
 
 };
 document.body.addEventListener('modsLoaded', onModsLoaded);
