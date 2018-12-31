@@ -31,4 +31,4 @@ Edit custom_music.db
   }
 }```
 
-***Note: The path is relative to the assets folder inside the CrossCode directory
+***Note: The path is relative to your mod folder
