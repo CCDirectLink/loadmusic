@@ -20,7 +20,7 @@ Edit custom_music.db
 ```
 
 
-### For sing-track bgm:
+### For single-track bgm:
 ```js
 {
   "bgm" : {
