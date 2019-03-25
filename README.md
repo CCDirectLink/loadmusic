@@ -16,7 +16,8 @@ Edit custom_music.db
             "volume" : 0.5
       }
   }
-}```
+}
+```
 
 
 ### For sing-track bgm:
@@ -29,6 +30,7 @@ Edit custom_music.db
             "volume" : 0.5
       }
   }
-}```
+}
+```
 
 ***Note: The path is relative to your mod folder
