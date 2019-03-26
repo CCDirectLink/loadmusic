@@ -16,10 +16,11 @@ Edit custom_music.db
             "volume" : 0.5
       }
   }
-}```
+}
+```
 
 
-### For sing-track bgm:
+### For single-track bgm:
 ```js
 {
   "bgm" : {
@@ -29,6 +30,7 @@ Edit custom_music.db
             "volume" : 0.5
       }
   }
-}```
+}
+```
 
-***Note: The path is relative to the assets folder inside the CrossCode directory
+***Note: The path is relative to your mod folder
