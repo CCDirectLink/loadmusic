@@ -6,12 +6,9 @@ var onModsLoaded = function() {
 	const musicDataFileName = "custom_music.db";
 	const musicDataPath = join(loadMusicPath , musicDataFileName);
 	
-	/*try {
-		
-		console.log(musicData);
-	} catch(e) {
-		throw Error(`Mod loadmusic could not load.\nFile "${musicDataPath}" was not found.`);
-	} */
+	function deepCopy(obj) {
+		return JSON.parse(JSON.stringify(obj));
+	}
 	
 	function replaceObjectValue(leftObject, rightObject) {
 		for(var key of Object.keys(rightObject)) {
@@ -36,6 +33,9 @@ var onModsLoaded = function() {
 		if(bgm) {
 			for(let key of Object.keys(bgm)) {
 				const singleBGM = bgm[key];
+				if(singleBGM.override || singleBGM.swap) {
+					continue;
+				}
 				if(singleBGM.path) {
 					singleBGM.path = join(modRelativePath , singleBGM.path);
 				}
@@ -45,14 +45,57 @@ var onModsLoaded = function() {
 			}
 		}
 	}
-	function loadCustomMusic(musicData) {
+	function overrideTrack(musicData) {
+		let trackName = musicData.track;
+		
+		for(var i in musicData) {
+			delete musicData[i];
+		}
+		
+		let newTrack = cc.ig.BGM_TRACK_LIST[trackName];
+		
+		Object.assign(musicData, deepCopy(newTrack));
+	}
+
+	function swapTrack(musicData, trackName) {
+		
+		let otherTrackName = musicData.track;
+		
+		let firstTrackConfig = cc.ig.BGM_TRACK_LIST[trackName];
+		let secondTrackConfig = cc.ig.BGM_TRACK_LIST[otherTrackName];
+		
+		let trackOneConfig = deepCopy(firstTrackConfig);
+		let trackTwoConfig = deepCopy(secondTrackConfig);
+		
+		
+		cc.ig.BGM_TRACK_LIST[trackName] = trackTwoConfig;
+		cc.ig.BGM_TRACK_LIST[otherTrackName] = trackOneConfig;
+		
+	}
+	
+	function createTrack(musicData) {
+		let musicKeys = getObjectEntries(cc.ig.bgm.varNames);
+		for(let [oldKey, newKey] of musicKeys) {
+			renameObjectKey(musicData, oldKey, newKey);
+		}		
+	}
+	function setupCustomMusic(musicData) {
 		if(!musicData)
 			return;
 		let customMusic = musicData.bgm || {};
-		let musicKeys = getObjectEntries(cc.ig.bgm.varNames);
-		for (let i in customMusic) {
-			for(let [oldKey, newKey] of musicKeys) {
-				renameObjectKey(customMusic[i], oldKey, newKey);
+		
+		for (let trackName in customMusic) {
+			let music = customMusic[trackName];
+			if(music.override) {
+				overrideTrack(music);
+			}
+			else if(music.swap) {
+				swapTrack(music, trackName);
+				
+				// so it doesn't override it
+				delete customMusic[trackName];
+			} else {
+				createTrack(music);
 			}
 		}
 		replaceObjectValue(cc.ig.BGM_TRACK_LIST, customMusic);
@@ -64,7 +107,7 @@ var onModsLoaded = function() {
 		var mapTrackConfigs = musicData.mapTrackConfigs || {};
 		for (var mapName in mapTrackConfigs) {
 			var mapBGMData = mapTrackConfigs[mapName];
-			for (var themeType in mapBGMData) {
+			for (let themeType in mapBGMData) {
 				renameObjectKey(mapBGMData[themeType],"name", cc.ig.varNames.BGMpath)
 			}
 		}
@@ -77,7 +120,6 @@ var onModsLoaded = function() {
 		console.log("----------------------");
 		console.log(`%c${modFolderName}`, "color:red");
 		let modFolder = join(modDirectory, modFolderName);
-		
 		let modMusicDataFilePath = join(modFolder, musicDataFileName);
 		console.log(modFolder, modMusicDataFilePath);
 		if(fs.existsSync(modMusicDataFilePath)) {
@@ -85,7 +127,7 @@ var onModsLoaded = function() {
 			let rawMusicData = fs.readFileSync(modMusicDataFilePath);
 			let musicData = JSON.parse(rawMusicData) || {};
 			completeRelativePath(join('mods', modFolderName), musicData);
-			loadCustomMusic(musicData);
+			setupCustomMusic(musicData);
 			loadCustomTrackConfig(musicData);
 		}
 	}
