@@ -11,7 +11,6 @@ var onModsLoaded = function() {
 			if(!Array.isArray(track)) {
 				return old.apply(this, arguments);
 			}
-			debugger;
 			var trackStackTop = this[entries.stack][this[entries.stack].length - 1];
 			if(!trackStackTop || this.paused) {
 				return false;
