@@ -1,0 +1,105 @@
+{
+    "tree": {
+        "name": "cc",
+        "type": "object",
+        "children": [
+            {
+                "type": "raw",
+                "name": "decreaseRef"
+            },
+            {
+                "type": "raw",
+                "name": "destructor"
+            },
+            {
+                "type": "static",
+                "name": "trackStack",
+                "parent": "ig"
+            },
+            {
+                "type": "raw",
+                "name": "isTopStackTrack"
+            }
+        ]
+    },
+    "entries": {
+        "BGMpath": {
+            "type": "select",
+            "pattern": "properties.0.key.name",
+            "from": {
+                "type": "ObjectExpression",
+                "values": [
+                    {
+                        "name": "properties.0.value.raw",
+                        "value": "\"intro\""
+                    }
+                ]
+            }
+        },
+        "isTopStackTrack": {
+            "type": "select",
+            "pattern": "callee.property.name",
+            "from": {
+                "type": "CallExpression",
+                "values": [
+                    {
+                        "name": "arguments.0.property.name",
+                        "type": "dynamic",
+                        "value": "BGMpath"
+                    },
+                    {
+                        "name": "arguments.0.object.property.name",
+                        "type": "dynamic",
+                        "value": "BGMpath"
+                    }
+                ]
+            }
+        },
+        "decreaseRef": {
+            "type": "select",
+            "pattern": "key.name",
+            "from": {
+                "type": "Property",
+                "values": [
+                    {
+                        "name": "value.body.body.1.expression.right.arguments.0.arguments.0.left.left.raw",
+                        "value": "\"Call to decreaseRef() results in negative count! Key: '\""
+                    }
+                ]
+            }
+        },
+        "destructor": {
+            "type": "select",
+            "pattern": "key.name",
+            "from": {
+                "type": "Property",
+                "values": [
+                    {
+                        "name": "value.body.body.0.expression.right.callee.object.property.name",
+                        "type": "dynamic",
+                        "value": "BGMpath"
+                        
+                    },
+                    {
+                        "name": "value.body.body.0.expression.left.property.name",
+                        "type": "dynamic",
+                        "value": "BGMpath"
+                    }
+                ]
+            }
+        },
+        "trackStack": {
+            "type": "select",
+            "pattern": "right.properties.4.value.object.property.name",
+            "from": {
+                "type": "AssignmentExpression",
+                "values": [
+                    {
+                        "name": "left.property.name",
+                        "value": "bgm"
+                    }
+                ]
+            }
+        }
+    }
+}

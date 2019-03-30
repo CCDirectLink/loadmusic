@@ -5,7 +5,67 @@ var onModsLoaded = function() {
 	
 	const musicDataFileName = "custom_music.db";
 	const musicDataPath = join(loadMusicPath , musicDataFileName);
-	
+	function overrideTrackStackCheck() {
+		let old = ig[entries.trackStack][entries.isTopStackTrack];
+		ig[entries.trackStack][entries.isTopStackTrack] = function(track, volume) {
+			if(!Array.isArray(track)) {
+				return old.apply(this, arguments);
+			}
+			debugger;
+			var trackStackTop = this[entries.stack][this[entries.stack].length - 1];
+			if(!trackStackTop || this.paused) {
+				return false;
+			}
+			
+			return track.filter((e) => e[entries.BGMpath] === trackStackTop[entries.BGMpath]).length;
+		}
+	}
+	function overrideBGMTrack() {
+		ig[entries.BGMTrack] = ig[entries.BGMTrack].extend({
+			name : null,
+			[entries.BGMpath] : null,
+			[entries.init] : function(a) {
+				this.name = a;
+				if (a = cc.ig.BGM_TRACK_LIST[a]) {
+					if(a.tracks) {
+						this[entries.BGMpath] = [];
+						
+						this.random = !!a.random;
+						this.trackIndex = 0;
+						// a list of names 
+						a.tracks.forEach((track) =>  {
+							this[entries.BGMpath].push(new ig[entries.BGMTrack](track))
+						})
+					} else {
+						this[entries.BGMpath] = new cc.ig.Track(a.path, a[entries.loopEnd], a[entries.intro], a[entries.introEnd], a.volume);
+					}
+				}
+			},
+			get : function () {
+				if(Array.isArray(this[entries.BGMpath])) {
+					if(this.random) {
+						return this[entries.BGMpath][Math.floor((Math.random() * this[entries.BGMpath].length))].get();
+					}
+					let currentTrack = this[entries.BGMpath][this.trackIndex%this[entries.BGMpath].length];
+					this.trackIndex++;
+					return currentTrack;
+				}
+				return this[entries.BGMpath];
+			},
+			[entries.destructor]: function() {
+				if(Array.isArray(this[entries.BGMpath])) {
+					this[entries.BGMpath].forEach((track) => {
+						track[entries.destructor]();
+					})
+				} else {
+					this[entries.BGMpath] && this[entries.BGMpath][entries.decreaseRef]();
+				}
+			},
+			copy: function() {
+				return new ig[entries.BGMTrack](this.name)
+			}
+		});
+	}
 	function deepCopy(obj) {
 		return JSON.parse(JSON.stringify(obj));
 	}
@@ -86,6 +146,8 @@ var onModsLoaded = function() {
 		
 		for (let trackName in customMusic) {
 			let music = customMusic[trackName];
+			if(music.tracks)
+				continue;
 			if(music.override) {
 				overrideTrack(music);
 			}
@@ -113,7 +175,8 @@ var onModsLoaded = function() {
 		}
 		replaceObjectValue(cc.ig.bgm.mapConfig, mapTrackConfigs);
 	};
-	
+	overrideBGMTrack();
+	overrideTrackStackCheck();
 	const modDirectory = join(loadMusicPath, '..');
 	const modsFolderName = fs.readdirSync(modDirectory);
 	for(let modFolderName of modsFolderName) {

@@ -2,5 +2,6 @@
 	"name": "Custom Music Loader",
 	"description" : "Add your own music",
 	"main": "mod.js",
-    "version" : "1.0.0"
+    "version" : "1.0.0",
+	"table" : "New File.db"
 }
