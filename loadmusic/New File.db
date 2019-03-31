@@ -100,6 +100,19 @@
                     }
                 ]
             }
+        },
+		"BGMTrack": {
+            "type": "select",
+            "pattern": "callee.property.name",
+            "from": {
+                "type": "NewExpression",
+                "values": [
+                    {
+                        "name": "arguments.0.raw",
+                        "value": "\"title\""
+                    }
+                ]
+            }
         }
     }
 }
