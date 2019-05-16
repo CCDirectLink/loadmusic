@@ -41,17 +41,17 @@ var onModsLoaded = function() {
 			get : function () {
 				if(Array.isArray(this.track)) {
 					if(this.random) {
-						return this.track[Math.floor((Math.random() * this[entries.BGMpath].length))].get();
+						return this.track[Math.floor((Math.random() * this.track.length))].get();
 					}
-					let currentTrack = this.track[this.trackIndex%this[entries.BGMpath].length];
+					let currentTrack = this.track[this.trackIndex%this.track.length];
 					this.trackIndex++;
 					return currentTrack;
 				}
 				return this.track;
 			},
 			clearCached : function() {
-				if(Array.isArray(this[entries.BGMpath])) {
-					this[entries.BGMpath].forEach((track) => {
+				if(Array.isArray(this.track)) {
+					this.track.forEach((track) => {
 						track.clearCached();
 					})
 				} else {
