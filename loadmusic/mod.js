@@ -5,63 +5,58 @@ var onModsLoaded = function() {
 	
 	const musicDataFileName = "custom_music.db";
 	const musicDataPath = join(loadMusicPath , musicDataFileName);
-	function overrideTrackStackCheck() {
-		let old = ig[entries.trackStack][entries.isTopStackTrack];
-		ig[entries.trackStack][entries.isTopStackTrack] = function(track, volume) {
+	function overrideTrackPlayingCheck() {
+		let isTrackPlaying = ig.music.isTrackPlaying.bind(ig.music);
+		ig.music.isTrackPlaying = function(track, volume) {
 			if(!Array.isArray(track)) {
-				return old.apply(this, arguments);
+				return isTrackPlaying.apply(this, arguments);
 			}
-			var trackStackTop = this[entries.stack][this[entries.stack].length - 1];
-			if(!trackStackTop || this.paused) {
+			var topTrack = this._getTopTrack();
+			if(!topTrack || this.paused) {
 				return false;
 			}
 			
-			return track.filter((e) => e[entries.BGMpath] === trackStackTop[entries.BGMpath]).length;
+			return track.filter((currentTrack) => currentTrack.introPath === topTrack.introPath).length;
 		}
 	}
 	function overrideBGMTrack() {
-		ig[entries.BGMTrack] = ig[entries.BGMTrack].extend({
-			name : null,
-			[entries.BGMpath] : null,
-			[entries.init] : function(a) {
+		ig.BgmTrack = ig.BgmTrack.extend({
+			init : function(a) {
 				this.name = a;
 				if (a = cc.ig.BGM_TRACK_LIST[a]) {
 					if(a.tracks) {
-						this[entries.BGMpath] = [];
+						this.track = [];
 						
 						this.random = !!a.random;
 						this.trackIndex = 0;
 						// a list of names 
 						a.tracks.forEach((track) =>  {
-							this[entries.BGMpath].push(new ig[entries.BGMTrack](track))
+							this.track.push(new ig.BgmTrack(track))
 						})
 					} else {
-						this[entries.BGMpath] = new cc.ig.Track(a.path, a[entries.loopEnd], a[entries.intro], a[entries.introEnd], a.volume);
+						this.track = new ig.Track(a.path, a.loopEnd, a.introPath, a.introEnd, a.volume);
 					}
 				}
 			},
 			get : function () {
-				if(Array.isArray(this[entries.BGMpath])) {
+				if(Array.isArray(this.track)) {
 					if(this.random) {
-						return this[entries.BGMpath][Math.floor((Math.random() * this[entries.BGMpath].length))].get();
+						return this.track[Math.floor((Math.random() * this[entries.BGMpath].length))].get();
 					}
-					let currentTrack = this[entries.BGMpath][this.trackIndex%this[entries.BGMpath].length];
+					let currentTrack = this.track[this.trackIndex%this[entries.BGMpath].length];
 					this.trackIndex++;
 					return currentTrack;
 				}
-				return this[entries.BGMpath];
+				return this.track;
 			},
-			[entries.destructor]: function() {
+			clearCached : function() {
 				if(Array.isArray(this[entries.BGMpath])) {
 					this[entries.BGMpath].forEach((track) => {
-						track[entries.destructor]();
+						track.clearCached();
 					})
 				} else {
-					this[entries.BGMpath] && this[entries.BGMpath][entries.decreaseRef]();
+					this.parent();
 				}
-			},
-			copy: function() {
-				return new ig[entries.BGMTrack](this.name)
 			}
 		});
 	}
@@ -127,13 +122,16 @@ var onModsLoaded = function() {
 		let trackTwoConfig = deepCopy(secondTrackConfig);
 		
 		
-		cc.ig.BGM_TRACK_LIST[trackName] = trackTwoConfig;
-		cc.ig.BGM_TRACK_LIST[otherTrackName] = trackOneConfig;
+		ig.BGM_TRACK_LIST[trackName] = trackTwoConfig;
+		ig.BGM_TRACK_LIST[otherTrackName] = trackOneConfig;
 		
 	}
 	
 	function createTrack(musicData) {
-		let musicKeys = getObjectEntries(cc.ig.bgm.varNames);
+		const keyAliases = {
+			"intro" : "introPath"
+		};
+		let musicKeys = getObjectEntries(keyAliases);
 		for(let [oldKey, newKey] of musicKeys) {
 			renameObjectKey(musicData, oldKey, newKey);
 		}		
@@ -159,23 +157,24 @@ var onModsLoaded = function() {
 				createTrack(music);
 			}
 		}
-		replaceObjectValue(cc.ig.BGM_TRACK_LIST, customMusic);
+		replaceObjectValue(ig.BGM_TRACK_LIST, customMusic);
 	};
 
 	function loadCustomTrackConfig(musicData) {
 		if(!musicData)
 			return;
 		var mapTrackConfigs = musicData.mapTrackConfigs || {};
+		
 		for (var mapName in mapTrackConfigs) {
 			var mapBGMData = mapTrackConfigs[mapName];
 			for (let themeType in mapBGMData) {
 				renameObjectKey(mapBGMData[themeType],"name", cc.ig.varNames.BGMpath)
 			}
 		}
-		replaceObjectValue(cc.ig.bgm.mapConfig, mapTrackConfigs);
+		replaceObjectValue(ig.BGM_DEFAULT_TRACKS, mapTrackConfigs);
 	};
 	overrideBGMTrack();
-	overrideTrackStackCheck();
+	overrideTrackPlayingCheck();
 	const modDirectory = join(loadMusicPath, '..');
 	const modsFolderName = fs.readdirSync(modDirectory);
 	for(let modFolderName of modsFolderName) {
@@ -190,7 +189,7 @@ var onModsLoaded = function() {
 			let musicData = JSON.parse(rawMusicData) || {};
 			completeRelativePath(join('mods', modFolderName), musicData);
 			setupCustomMusic(musicData);
-			loadCustomTrackConfig(musicData);
+			// loadCustomTrackConfig(musicData);
 		}
 	}
 	/**/
