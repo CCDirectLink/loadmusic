@@ -1,4 +1,4 @@
-# loadmusic
+# loadmusic (deprecated)
 
 
 ## How to use:
